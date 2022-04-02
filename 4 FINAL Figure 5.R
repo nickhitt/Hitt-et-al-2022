@@ -1,6 +1,7 @@
-#### Figure4  for Bulk d13C Paper
+#### Figure5  for Bulk d13C Paper
 
-#### This code produces plot the figure 4 plot which shows the records by Pacific basin
+#### This code produces plot the figure 5 plot which shows the records by Pacific basin
+#### and includes the ENSO panel from Moy et al
 #### The code should: 1) load in the data 2) make the dataframes 3) process the data
 #### 4) make the figure 5) Include the legend in the figure
 
@@ -21,7 +22,7 @@ setwd("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes")
 ## Data Import
 
 mcmahon <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/McMahon et al 2015 Data.xlsx")) %>%
-  rename(age = Year) %>%
+  dplyr::rename(age = Year) %>%
   dplyr::mutate(age = 1950 - age)
 
 data <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Clean d13C Data.xlsx")) %>%
@@ -42,11 +43,11 @@ pacific_data <- mcmahon %>%
 
 #Loading in Glynn Data
 glynn_data <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Glynn et al Data.xlsx")) %>%
-  rename(age = Year) %>%
+  dplyr::rename(age = Year) %>%
   subset(age < 3000) %>%
   dplyr::filter(d13C != "-") %>%
   select(-d15N) %>%
-  rename(Bulk = d13C, Coral = ID) %>%
+  dplyr::rename(Bulk = d13C, Coral = ID) %>%
   dplyr::mutate(Phe = case_when(!is.na(Bulk) ~ NA)) %>%
   dplyr::filter(Coral != "35104") %>%
   dplyr::filter(Coral != "47996") %>%
@@ -86,7 +87,7 @@ locale <- c("EAuC1", "EAuC2")
 #Calculating d13C anom of North Pacific Data and Organising Dataframe
 pacific_data <- pacific_data %>% 
   dplyr::select(-z, -Phe) %>%
-  rename(d13c = Bulk) %>%
+  dplyr::rename(d13c = Bulk) %>%
   dplyr::mutate(d13c_anom = case_when(Coral == "FFS694" ~ d13c - mean_d13c_pacific[1,2],
                                       Coral == "GER9701" ~ d13c - mean_d13c_pacific[2,2],
                                       Coral == "GER9702" ~ d13c - mean_d13c_pacific[3,2],
@@ -100,38 +101,77 @@ pacific_data <- pacific_data %>%
 #Ordering dataframe by coral and time
 pacific_data <- pacific_data[order(pacific_data$Coral, pacific_data$age),]
 
-# Removing Bad 35104 Data
-#pacific_data[which(pacific_data$Coral == "EAuC2" & pacific_data$age < 2000 & pacific_data$age > 1000),] <- NA
 pacific_data <- pacific_data %>%
   dplyr::filter(!is.na(age)) %>%
   dplyr::mutate(Interval = case_when(age < 1730 & basin == "North Pacific" ~ "Interval 1",
-                                     age > 1730 & basin == "North Pacific" ~ "Interval 2",
-                                     age < 1510 & basin == "South Pacific" ~ "Interval 1",
-                                     age > 1510 & basin == "South Pacific" ~ "Interval 2"))
+                                     age > 1730 & basin == "North Pacific" ~ "Interval 2"))
+                                     #age < 1510 & basin == "South Pacific" ~ "Interval 1",
+                                     #age > 1510 & basin == "South Pacific" ~ "Interval 2"))
+
+orders <- colnames(pacific_data)
+
+# Loading in and Cleaning Moy Data
+Moy_ENSO_Data <- read_excel("Moy_ENSO Data.xlsx") %>%
+  dplyr::rename(age = Age, d13c = "Red Intensity") %>%
+  subset(age < 3000) %>%
+  select(age, d13c) %>%
+  dplyr::mutate(Coral = "Moy et al 2002",
+                d13c_anom = d13c,
+                basin = "Eastern Pacific",
+                Interval = "Interval 3") %>%
+  select(orders)
+
+## Loading in and cleaning Oceans2k
+
+oceans_2k <- read_excel("Oceans2k.xlsx", sheet = "Pacific") %>%
+  dplyr::rename(d13c = SSTa) %>%
+  dplyr::filter(d13c != "NaN") %>%
+  dplyr::mutate(age = 1950-age,
+                d13c_anom = d13c,
+                Coral = "Oceans2k",
+                basin = "Pacific Ocean",
+                Interval = "Interal 4") %>%
+  select(orders)
+
+## Adding Moy and Oceans2k to Pacific Data
+
+pacific_data <- pacific_data %>%
+  rbind(Moy_ENSO_Data, oceans_2k) %>%
+  dplyr::mutate(d13c_anom = round(as.numeric(d13c_anom), digits = 3)) %>%
+  dplyr::mutate(smooth = case_when(basin != "Eastern Pacific" ~ 1,
+                                   basin == "Eastern Pacific" ~ 0)) 
+
+lab1 <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
+lab2 <- expression(paste("Red Colour Intesity"))
+lab3 <- expression(paste("SST"["Anomaly"]))
+
 
 ###############################################################################
 ## Plotting Figure of all d13C anom data in North and South Pacific
 
 pacific_figure <- pacific_data %>%
   ggplot(mapping = aes(age, d13c_anom, group = basin)) +
-  geom_point(aes(colour = Coral)) + 
-  geom_smooth(data = subset(pacific_data, basin == "North Pacific"), 
-              aes(colour = basin, group = Interval), method = "loess", 
-              se = TRUE, span = 0.35, show.legend = FALSE) +
-  geom_smooth(data = subset(pacific_data, basin == "South Pacific"), 
-              aes(colour = basin), method = "loess", 
-              se = TRUE, span = 0.2, show.legend = FALSE) +
-  facet_grid(rows = vars(basin) , scales = "free_y") +
+  geom_point(data = subset(pacific_data, smooth==1),aes(colour = basin, group = Interval), show.legend = FALSE) + 
+  geom_line(data = subset(pacific_data, smooth!=1),aes(colour = basin, group = Interval), show.legend = FALSE) +
+  geom_smooth(data = subset(pacific_data, smooth==1 & basin == "North Pacific"), aes(color = "black",
+              group = Interval), color = "black", method = "loess", se = TRUE, span = 0.35, show.legend = FALSE) +
+  geom_smooth(data = subset(pacific_data, smooth==1 & basin == "South Pacific"), aes(color = "black",
+              group = Interval), color = "black", method = "loess", se = TRUE, span = 0.2, show.legend = FALSE) + 
+  geom_smooth(data = subset(pacific_data, smooth==1 & basin == "Pacific Ocean"), aes(color = "black",
+              group = Interval), color = "black", method = "loess", se = TRUE, span = 0.5, show.legend = FALSE) + 
+  facet_grid(rows = vars(factor(basin, levels=c('Eastern Pacific',
+                                                'North Pacific',
+                                                'South Pacific',
+                                                'Pacific Ocean'))), scales = "free_y") +
   scale_colour_brewer(palette = "Paired") +
   xlab("Time (cal BP)") +
-  scale_x_continuous(breaks = seq(0,3000,500)) +
   theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(fill = NA), 
-        legend.key = element_rect(colour = "transparent", fill = "white"),
-        legend.box.margin = margin(1, 1, 1, 1), legend.position = "top",
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.title = element_text(size = 8), legend.text = element_text(size = 8))
-pacific_figure$labels$colour <- "Coral"
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Norm"], " (\u2030)"))
+#pacific_figure$labels$y <- expression(paste("SST"["Anomaly"], " (", "\u00B0C", ")"))
+#pacific_figure$labels$y <- expression(paste("Red Colour Intensity"))
+
 
 pacific_figure
+
+

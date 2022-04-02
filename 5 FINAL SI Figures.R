@@ -1,4 +1,4 @@
-#### Figure3  for Bulk d13C Paper
+#### SI Figures 2-3 for Hitt et al 2022
 
 library(dplyr)
 library(lattice)
@@ -10,6 +10,10 @@ library(gridExtra)
 library(ggplot2)
 library(ggpubr)
 library(egg)
+
+setwd("~/Dropbox/R Codes")
+
+source("~/Dropbox/R Codes/Base Stats Functions.R")
 
 setwd("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes")
 
@@ -27,26 +31,6 @@ aa_data <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/
   dplyr::filter(Coral == "P") %>%          
   dplyr::mutate(Coral_name = case_when(Coral == "P" ~ "EAuC 2")) %>%
   dplyr::filter(sample.id != "P-2")
-################################################################################
-### Making Figure of Bulk C and Phe C in North Pacific
-
-# Top Panel
-
-time_series_bulk <- xyplot(Bulk ~ age, data = mcmahon,
-                           groups = factor(Coral),
-                           pch = 20, auto.key = list(columns=2), type = "l",
-                           xlim = c(-78, 1500))
-  
-  
-time_series_Phe <- xyplot(Phe ~ age, data = mcmahon,
-                          groups = factor(Coral, labels = c("GER9701","GER9702", "FFS694")),
-                          pch = 20, auto.key = list(columns=2), 
-                          type = "p", ylab = "Phe 13C",
-                          xlim = c(-78, 1500))
-
-figure1a <- doubleYScale(time_series_bulk, time_series_Phe, add.ylab2 = TRUE)
-
-figure1a
 
 ################################################################################
 ## Data Import, Clean and Analysis (and cleaning/reorgaising againn) for d13C anomaly figure
@@ -125,176 +109,13 @@ pacific_data <- pacific_data %>%
                                      age > 1510 & basin == "South Pacific" ~ "Interval 2"))
 
 ###############################################################################
-## Plotting Figure of all d13C anom data in North and South Pacific
-
-pacific_figure <- pacific_data %>%
-  ggplot(mapping = aes(age, d13c_anom, group = basin)) +
-  geom_point(aes(colour = Coral)) + 
-  geom_smooth(aes(colour = basin, group = Interval), method = "loess", se = TRUE, span = 0.35, show.legend = FALSE) +
-  geom_smooth(aes(colour = basin, group = Interval), method = "loess", se = FALSE, span = 0.35, show.legend = TRUE) +
-  facet_grid(rows = vars(basin)) +
-  scale_colour_brewer(palette = "Paired") +
-  xlab("Time (cal BP)") +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(fill = NA), 
-        legend.key = element_rect(colour = "transparent", fill = "white"),
-        legend.box.margin = margin(1, 1, 1, 1), legend.position = "top",
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        legend.title = element_text(size = 6), legend.text = element_text(size = 6))
-pacific_figure$labels$colour <- "Coral"
-pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-
-pacific_figure
-
-##############################################################################
-# ENSO, Global Temp Comparison
-
-moy_numevents <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Moy_ENSO Data.xlsx",
-                             sheet = "Num Events"))
-
-enso_numevents <- moy_numevents %>%
-  ggplot(mapping = aes(Age, Number.of.Events)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = TRUE, span = 0.2, show.legend = FALSE) +
-  geom_smooth(method = "loess", se = FALSE, span = 0.2, show.legend = TRUE) +
-  scale_colour_brewer(palette = "Paired") +
-  xlab("Time (cal BP)") +
-  ylab("Number of Events") +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(fill = NA),
-        legend.key = element_rect(colour = "transparent", fill = "white"),
-        legend.box.margin = margin(6, 6, 6, 6),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-enso_numevents
-
-pacific_figure <- pacific_data %>%
-  ggplot(mapping = aes(age, d13c_anom, group = basin)) +
-  geom_point(aes(colour = Coral)) + 
-  geom_smooth(aes(colour = basin, group = Interval), method = "loess", se = TRUE, span = 0.35, show.legend = FALSE) +
-  geom_smooth(aes(colour = basin, group = Interval), method = "loess", se = FALSE, span = 0.35, show.legend = TRUE) +
-  facet_grid(rows = vars(basin)) +
-  scale_colour_brewer(palette = "Paired") +
-  xlab("Time (cal BP)") +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.position = "none",
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        strip.text.y = element_blank())
-pacific_figure$labels$colour <- "Coral"
-pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-
-#pacific_figure <- ggplotGrob(pacific_figure)
-
-pacific_figure
-
-moy_raw <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Moy_ENSO Data.xlsx",
-                                       sheet = "Raw"))
-
-enso_red_intensity <- moy_raw %>%
-  ggplot(mapping = aes(Age, Red.Intensity)) +
-  geom_point() +
-  #geom_smooth(method = "loess", se = TRUE, span = 0.175, show.legend = FALSE) +
-  #geom_smooth(method = "loess", se = FALSE, span = 0.175, show.legend = TRUE) +
-  scale_colour_brewer(palette = "Paired") +
-  xlab("Time (cal BP)") +
-  ylab("Red Intensity") +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(fill = NA), 
-        legend.key = element_rect(colour = "transparent", fill = "white"),
-        legend.box.margin = margin(4, 4, 4, 4),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-#enso_red_intensity <- ggplotGrob(enso_red_intensity)
-
-###############################################################################
-### Temperature Figure
-pages <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Pages2kTemp.xlsx")) %>%
-  rename(temp = Full.ensemble.median) %>%
-  dplyr::mutate(Year = 1950-Year)
-
-temperature_figure <- pages %>%
-  ggplot(mapping = aes(Year, temp)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = TRUE, span = 0.175, show.legend = FALSE) +
-  geom_smooth(method = "loess", se = FALSE, span = 0.175, show.legend = TRUE) +
-  scale_colour_brewer(palette = "Paired") +
-  xlab("Time (cal BP)") +
-  ylab("Temperature Anomaly") +
-  xlim(-50, 3000) +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(fill = NA), 
-        legend.key = element_rect(colour = "transparent", fill = "white"),
-        legend.box.margin = margin(4, 4, 4, 4),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-temperature_figure
-#temperature_figure <- ggplotGrob(temperature_figure)
-#temperature_figure
-
-
-###### Putting all figures together
-
-#align_plots(pacific_figure, enso_red_intensity, temperature_figure, ncol=1)
-
-combined <- plot_grid(pacific_figure, enso_red_intensity, temperature_figure, 
-                      axis = "lr",align = "h", ncol = 1, greedy = TRUE,
-                      rel_heights = c(1.5/4, 1/4, 1/4),
-                      labels = c("A", "B", "C"))
-
-ggsave("3panel_figure",
-       plot = combined, device = "png", 
-       path = "~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Figures",
-       width = 6, height = 8, units = c("in"),
-       dpi = 300)
-  
-###############################################################################   
-## Loess Smoothing Analysis
-
-# Pulling out each basin
-
-north_pacific <- pacific_data %>%
-  dplyr::filter(basin == "North Pacific")
-
-south_pacific <- pacific_data %>%
-  dplyr::filter(basin == "South Pacific")
-
-# Loess Smoothing
-
-smooth_north <- predict(loess(d13c_anom~age, north_pacific, span = 0.225))
-
-smooth_south <- predict(loess(d13c_anom~age, south_pacific, span = 0.225))
-
-# Putting Data Back
-
-north_pacific <- north_pacific %>%
-  cbind(smooth_north) %>%
-  rename(smoothed = smooth_north)
-
-south_pacific <- south_pacific %>%
-  cbind(smooth_south) %>%
-  rename(smoothed = smooth_south)
-
-# Combining to one dataframe for plotting check
-
-smoothed_pacific_data <- north_pacific %>%
-  rbind(south_pacific)
-
-#### Plotting Figure
-
-figure4 <- smoothed_pacific_data %>%
-  ggplot(mapping = aes(age, smoothed, group = basin)) +
-  geom_line(aes(colour = basin)) +
-  xlab("Time (cal BP)") +
-  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        legend.box.background = element_rect(),
-        legend.box.margin = margin(6, 6, 6, 6),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-figure4$labels$colour <- "Coral"
-figure4$labels$y <- expression(paste("Smoothed Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-figure4
-
-###############################################################################
 # Interpolating Data for Correlation Analysis
 
 #ordering for interpolate
-
+north_pacific <- pacific_data %>%
+  dplyr::filter(basin == "North Pacific")
+south_pacific <- pacific_data %>%
+  dplyr::filter(basin == "South Pacific")
 north_pacific_ordered <- north_pacific[order(north_pacific$age),]
 south_pacific_ordered <- south_pacific[order(south_pacific$age),]
 
@@ -387,7 +208,7 @@ combined_smoothed <- SP_smooth %>%
 
 ## Plotting All Data
 
-correlation_plot <- combined_smoothed %>%
+all_corals_regression <- combined_smoothed %>%
   ggplot(mapping = aes(North_smoothed, South_smoothed)) +
   geom_point() +
   geom_smooth(method = "lm") +
@@ -395,32 +216,76 @@ correlation_plot <- combined_smoothed %>%
         legend.box.background = element_rect(),
         legend.box.margin = margin(6, 6, 6, 6),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-correlation_plot$labels$x <- expression(paste("North Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-correlation_plot$labels$y <- expression(paste("South Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-correlation_plot
+all_corals_regression$labels$x <- expression(paste("North Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+all_corals_regression$labels$y <- expression(paste("South Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+all_corals_regression
 
 model_all <- lm(South_smoothed ~ North_smoothed, combined_smoothed)
 
 ## Plot by Intervals
 
-correlation_plot_intervals <- combined_smoothed %>%
-  dplyr::mutate(interval = case_when(interval == "Interval 1" ~ "130-1500 cal BP",
-                                     interval == "Interval 2" ~ "2000-2550 cal BP")) %>%
+corals_panel_regressions <- combined_smoothed %>%
+  dplyr::mutate(interval = case_when(interval == "Interval 1" ~ "130-1700 cal BP",
+                                     interval == "Interval 2" ~ "1923-2550 cal BP")) %>%
   ggplot(mapping = aes(North_smoothed, South_smoothed, group = interval)) +
   geom_point(aes(colour = interval)) +
   geom_smooth(aes(colour = interval), method = "lm") +
   theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
         legend.box.background = element_rect(),
         legend.box.margin = margin(6, 6, 6, 6),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
-correlation_plot_intervals$labels$x <- expression(paste("North Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-correlation_plot_intervals$labels$y <- expression(paste("South Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-correlation_plot_intervals$labels$colour <- "Time Interval"
-correlation_plot_intervals
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = c(0.8, 0.2),
+        legend.title = element_text(size = 7), 
+        legend.text = element_text(size = 5)) 
+corals_panel_regressions$labels$x <- expression(paste("North Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+corals_panel_regressions$labels$y <- expression(paste("South Pacific Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+corals_panel_regressions$labels$colour <- "Time Interval"
+corals_panel_regressions
 
 model_int1 <- lm(South_smoothed ~ North_smoothed, 
                  combined_smoothed[which(combined_smoothed$interval == "Interval 1"),])
 
 model_int2 <- lm(South_smoothed ~ North_smoothed, 
                  combined_smoothed[which(combined_smoothed$interval == "Interval 2"),])
+
+grid.arrange(all_corals_regression, corals_panel_regressions)
+
+### Supplementary means plot
+
+coral_47996 <- data.frame(read_excel("~/Dropbox/Marsden Black Coral Project/R Codes/Bulk Carbon Isotopes/Clean d13C Data.xlsx")) %>%
+  filter(Coral == "47996")
+means_47996 <- aggregate(d13c ~ Coral, coral_47996, mean)
+std_47996 <- aggregate(d13c ~ Coral, coral_47996, std)%>%
+  rename(stderr = d13c)
+df_47996 <- means_47996 %>%
+  left_join(std_47996) %>%
+  mutate(Basin = "South Pacific", Coral = "STF1")
+
+means <- aggregate(d13c ~ Coral, pacific_data, mean)
+stderr <- aggregate(d13c ~ Coral, pacific_data, std) %>%
+  rename(stderr = d13c)
+
+means <- means %>%
+  left_join(stderr) %>%
+  dplyr::mutate(Basin = ifelse(Coral %in% locale, "South Pacific", "North Pacific")) %>%
+  rbind(df_47996) %>%
+  arrange(Basin)
+
+mean_plot <- means %>%
+  ggplot(mapping = aes(Basin, d13c)) +
+  geom_point(aes(colour = Coral), size = 4, show.legend = FALSE) +
+  geom_point(aes(colour = Coral), size = 4, show.legend = TRUE) +
+  theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
+        legend.box.background = element_rect(),
+        legend.box.margin = margin(6, 6, 6, 6),
+        legend.key = element_rect(colour = "transparent", fill = "white"),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = "top",
+        legend.title = element_text(size = 14), 
+        legend.text = element_text(size = 12),
+        text = element_text(size = 14)) 
+mean_plot$labels$y <- expression(paste("Mean Bulk ", "\u03B4" ^ "13", "C", " (\u2030)"))
+
+mean_plot
+
 

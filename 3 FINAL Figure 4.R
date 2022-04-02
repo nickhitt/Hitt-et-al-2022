@@ -1,7 +1,6 @@
-#### Figure5  for Bulk d13C Paper
+#### Figure4  for Bulk d13C Paper
 
-#### This code produces plot the figure 5 plot which shows the records by Pacific basin
-#### and includes the ENSO panel from Moy et al
+#### This code produces plot the figure 4 plot which shows the records by Pacific basin
 #### The code should: 1) load in the data 2) make the dataframes 3) process the data
 #### 4) make the figure 5) Include the legend in the figure
 
@@ -101,8 +100,7 @@ pacific_data <- pacific_data %>%
 #Ordering dataframe by coral and time
 pacific_data <- pacific_data[order(pacific_data$Coral, pacific_data$age),]
 
-# Removing Bad 35104 Data
-pacific_data[which(pacific_data$Coral == "EAuC2" & pacific_data$age < 2000 & pacific_data$age > 1000),] <- NA
+# Identifyig coral interval facets for comparison
 pacific_data <- pacific_data %>%
   dplyr::filter(!is.na(age)) %>%
   dplyr::mutate(Interval = case_when(age < 1730 & basin == "North Pacific" ~ "Interval 1",
@@ -110,113 +108,35 @@ pacific_data <- pacific_data %>%
                                      age < 1510 & basin == "South Pacific" ~ "Interval 1",
                                      age > 1510 & basin == "South Pacific" ~ "Interval 2"))
 
-orders <- colnames(pacific_data)
-
-# Loading in and Cleaning Moy Data
-Moy_ENSO_Data <- read_excel("Moy_ENSO Data.xlsx") %>%
-  rename(age = Age, d13c = "Red Intensity") %>%
-  subset(age < 3000) %>%
-  select(age, d13c) %>%
-  dplyr::mutate(Coral = "Moy et al 2002",
-                d13c_anom = d13c,
-                basin = "Eastern Pacific",
-                Interval = "Interval 3") %>%
-  select(orders)
-
-## Loading in and cleaning Oceans2k
-
-oceans_2k <- read_excel("Oceans2k.xlsx", sheet = "Pacific") %>%
-  rename(d13c = SSTa) %>%
-  dplyr::filter(d13c != "NaN") %>%
-  dplyr::mutate(age = 1950-age,
-                d13c_anom = d13c,
-                Coral = "Oceans2k",
-                basin = "Pacific Ocean",
-                Interval = "Interal 4") %>%
-  select(orders)
-
-## Adding Moy and Oceans2k to Pacific Data
-
-pacific_data <- pacific_data %>%
-  rbind(Moy_ENSO_Data, oceans_2k) %>%
-  dplyr::mutate(d13c_anom = round(as.numeric(d13c_anom), digits = 3)) %>%
-  dplyr::mutate(smooth = case_when(basin != "Eastern Pacific" ~ 1,
-                                   basin == "Eastern Pacific" ~ 0)) 
-
-lab1 <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"]))
-lab2 <- expression(paste("Red Intesity"))
-lab3 <- expression(paste("SST"["Anomaly"]))
-
-
 ###############################################################################
 ## Plotting Figure of all d13C anom data in North and South Pacific
 
 pacific_figure <- pacific_data %>%
   ggplot(mapping = aes(age, d13c_anom, group = basin)) +
-  geom_point(aes(colour = basin), show.legend = FALSE) + 
-  geom_smooth(data = subset(pacific_data, smooth==1), aes(color = "black",
-              group = Interval), color = "black", method = "loess", se = TRUE, span = 0.5, show.legend = FALSE) +
-  #geom_smooth(aes(colour = Coral, group = Interval), method = "loess", se = FALSE, span = 0.35, show.legend = FALSE) +
-  facet_grid(rows = vars(factor(basin, levels=c('Eastern Pacific',
-                                                'North Pacific',
-                                                'South Pacific',
-                                                'Pacific Ocean'))), scales = "free_y") +
+  geom_point(aes(colour = Coral)) + 
+  geom_smooth(data = subset(pacific_data, basin == "North Pacific"), 
+              aes(colour = basin, group = Interval), method = "loess", 
+              se = TRUE, span = 0.35, show.legend = FALSE) +
+  # geom_smooth(data = subset(pacific_data, basin = "North Pacific"), 
+  #             aes(colour = basin, group = Interval), method = "loess", 
+  #             se = FALSE, span = 0.35, show.legend = FALSE) +
+  geom_smooth(data = subset(pacific_data, basin == "South Pacific"), 
+              aes(colour = basin), method = "loess", 
+              se = TRUE, span = 0.2, show.legend = FALSE) +
+  # geom_smooth(data = subset(pacific_data, basin = "South Pacific"), 
+  #             aes(colour = basin), method = "loess", 
+  #             se = FALSE, span = 0.35, show.legend = FALSE) +
+  facet_grid(rows = vars(basin), scales = "free_y") +
   scale_colour_brewer(palette = "Paired") +
   xlab("Time (cal BP)") +
+  scale_x_continuous(breaks = seq(0,3000,500)) + 
   theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-  # theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-  #       legend.box.background = element_rect(fill = NA), 
-  #       legend.key = element_rect(colour = "transparent", fill = "white"),
-  #       legend.box.margin = margin(1, 1, 1, 1), legend.position = "top",
-  #       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-  #       legend.title = element_text(size = 6), legend.text = element_text(size = 6))
-#pacific_figure$labels$colour <- "Bas"
-pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], "(\u2030)"))
-#pacific_figure$labels$y <- expression(paste("SST"["Anomaly"], " (", "\u00B0C", ")"))
-#pacific_figure$labels$y <- expression(paste("Red Shift Intensity"))
-
+        legend.box.background = element_rect(fill = NA), 
+        legend.key = element_rect(colour = "transparent", fill = "white"),
+        legend.box.margin = margin(1, 1, 1, 1), legend.position = "top",
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.title = element_text(size = 8), legend.text = element_text(size = 8))
+pacific_figure$labels$colour <- "Coral"
+pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Norm"], " (\u2030)"))
 
 pacific_figure
-
-
-###############################################################################
-
-# Data Analysis
-
-### Regime shift
-
-library(rshift)
-
-## Interval 1
-
-# regime shift of North Pacific
-
-data <- pacific_data %>%
-  subset(Interval == "Interval 1" & basin == "North Pacific") %>%
-  arrange(desc(age))
-
-shift <- Rodionov(data = data, col = "d13c_anom", time = "age", l = 100, prob = 0.95)
-
-
-
-# regime shift of South Pacific
-
-data <- pacific_data %>%
-  subset(Interval == "Interval 1" & basin == "South Pacific") %>%
-  arrange(desc(age))
-shift <- Rodionov(data = data, col = "d13c_anom", time = "age", l = 50, prob = 0.95)
-
-# regime shift of SSTs
-
-data <- pacific_data %>%
-  subset(basin == "Pacific Ocean") %>%
-  arrange(desc(age))
-
-loessMod35 <- loess(d13c_anom ~ age, data=pacific_data, span=0.35)
-loess_out <- predict(loessMod35)
-time <- seq(1950,50, -0.35)
-data <- data.frame(cbind(time, loess_out))
-  
-shift <- Rodionov(data = data, col = "loess_out", time = "time", l = 100, prob = 0.95)
-
