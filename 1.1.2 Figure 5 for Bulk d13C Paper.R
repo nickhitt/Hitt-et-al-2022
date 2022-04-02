@@ -169,16 +169,9 @@ pacific_figure <- pacific_data %>%
   xlab("Time (cal BP)") +
   theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-  # theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
-  #       legend.box.background = element_rect(fill = NA), 
-  #       legend.key = element_rect(colour = "transparent", fill = "white"),
-  #       legend.box.margin = margin(1, 1, 1, 1), legend.position = "top",
-  #       panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-  #       legend.title = element_text(size = 6), legend.text = element_text(size = 6))
-#pacific_figure$labels$colour <- "Bas"
-#pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Norm"], " (\u2030)"))
 #pacific_figure$labels$y <- expression(paste("SST"["Anomaly"], " (", "\u00B0C", ")"))
-pacific_figure$labels$y <- expression(paste("Red Colour Intensity"))
+#pacific_figure$labels$y <- expression(paste("Red Colour Intensity"))
 
 
 pacific_figure

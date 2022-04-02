@@ -118,18 +118,13 @@ pacific_figure <- pacific_data %>%
   geom_smooth(data = subset(pacific_data, basin == "North Pacific"), 
               aes(colour = basin, group = Interval), method = "loess", 
               se = TRUE, span = 0.35, show.legend = FALSE) +
-  # geom_smooth(data = subset(pacific_data, basin = "North Pacific"), 
-  #             aes(colour = basin, group = Interval), method = "loess", 
-  #             se = FALSE, span = 0.35, show.legend = FALSE) +
   geom_smooth(data = subset(pacific_data, basin == "South Pacific"), 
               aes(colour = basin), method = "loess", 
               se = TRUE, span = 0.2, show.legend = FALSE) +
-  # geom_smooth(data = subset(pacific_data, basin = "South Pacific"), 
-  #             aes(colour = basin), method = "loess", 
-  #             se = FALSE, span = 0.35, show.legend = FALSE) +
-  facet_grid(rows = vars(basin), scales = "free_y") +
+  facet_grid(rows = vars(basin) , scales = "free_y") +
   scale_colour_brewer(palette = "Paired") +
   xlab("Time (cal BP)") +
+  scale_x_continuous(breaks = seq(0,3000,500)) +
   theme(panel.background = element_rect(fill = "white", colour = "black", size = 1),
         legend.box.background = element_rect(fill = NA), 
         legend.key = element_rect(colour = "transparent", fill = "white"),
@@ -137,6 +132,6 @@ pacific_figure <- pacific_data %>%
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.title = element_text(size = 8), legend.text = element_text(size = 8))
 pacific_figure$labels$colour <- "Coral"
-pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Anomaly"], " (\u2030)"))
+pacific_figure$labels$y <- expression(paste("Bulk ", "\u03B4" ^ "13", "C"["Norm"], " (\u2030)"))
 
 pacific_figure
